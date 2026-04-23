@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finances">
+<meta name="theme-color" content="#1A1714">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Freelance Finances</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface2: #F5F5F5;
+  --border: #EBEBEB;
+  --text: #111111;
+  --muted: #888888;
+  --faint: #BBBBBB;
+  --green: #1A7A3C;
+  --green-bg: #F0FAF4;
+  --red: #C0392B;
+  --amber: #8A5A00;
+  --amber-bg: #FFFBF0;
+  --amber-border: #F0D080;
+  --blue: #1A5FA5;
+  --blue-bg: #F0F5FF;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bot: env(safe-area-inset-bottom);
+}
+html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+
+/* LOGIN */
+#login-screen {
+  position: fixed; inset: 0; background: #FFFFFF;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; padding: 2rem; z-index: 100;
+}
+#login-screen h1 { font-family: 'DM Serif Display', serif; font-size: 2.2rem; color: #111111; font-weight: 400; margin-bottom: 6px; }
+#login-screen p { color: #888888; font-size: 14px; margin-bottom: 2.5rem; }
+.login-box { background: #FFFFFF; border: 1px solid #EBEBEB; border-radius: var(--radius); padding: 2rem; width: 100%; max-width: 360px; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 11px; color: #888888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.login-field input {
+  width: 100%; height: 44px; background: #F5F5F5; border: 1px solid #EBEBEB;
+  border-radius: var(--radius-sm); padding: 0 14px; color: #111111;
+  font-size: 15px; font-family: 'DM Sans', sans-serif;
+}
+.login-field input:focus { outline: none; border-color: #111111; background: #FFFFFF; }
+.login-btn {
+  width: 100%; height: 48px; background: #111111; color: #FFFFFF;
+  border: none; border-radius: var(--radius-sm); font-size: 15px;
+  font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer;
+  margin-top: 8px; transition: opacity 0.15s;
+}
+.login-btn:hover { opacity: 0.85; }
+.login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.login-error { color: #C0392B; font-size: 13px; margin-top: 10px; text-align: center; min-height: 20px; }
+
+/* APP */
+#app { display: none; flex-direction: column; height: 100%; }
+#app.visible { display: flex; }
+
+header {
+  background: #FFFFFF; color: #111111;
+  padding: calc(var(--safe-top) + 16px) 18px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.header-inner { display: flex; align-items: center; justify-content: space-between; }
+header h1 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; color: #111111; }
+header p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.logout-btn {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--muted);
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+
+.metrics-strip {
+  display: flex; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; flex-shrink: 0;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.metrics-strip::-webkit-scrollbar { display: none; }
+.metric-pill { padding: 10px 16px; flex-shrink: 0; border-right: 1px solid var(--border); min-width: 120px; }
+.metric-pill:last-child { border-right: none; }
+.metric-pill .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.metric-pill .val { font-family: 'DM Serif Display', serif; font-size: 1.15rem; }
+.val.green { color: var(--green); } .val.red { color: var(--red); } .val.amber { color: var(--amber); }
+
+.tabs-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tab { flex: 1; padding: 11px 4px; font-size: 13px; color: var(--muted); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: 'DM Sans', sans-serif; transition: color 0.15s; }
+.tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--safe-bot) + 20px); }
+.panel { display: none; padding: 14px; }
+.panel.active { display: block; }
+
+.add-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+.form-row { display: flex; gap: 8px; }
+.field { display: flex; flex-direction: column; flex: 1; }
+.field label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+input[type=text], input[type=number], select {
+  height: 40px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0 10px; font-size: 15px; font-family: 'DM Sans', sans-serif;
+  background: var(--bg); color: var(--text); width: 100%; -webkit-appearance: none;
+}
+input:focus, select:focus { outline: none; border-color: var(--text); }
+.btn { height: 44px; border-radius: var(--radius-sm); font-size: 15px; font-family: 'DM Sans', sans-serif; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text); width: 100%; font-weight: 500; transition: opacity 0.15s; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--text); color: #F7F5F0; border-color: var(--text); }
+
+.entries { display: flex; flex-direction: column; gap: 8px; }
+.entry-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; display: flex; align-items: center; gap: 12px; }
+.entry-info { flex: 1; min-width: 0; }
+.entry-desc { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry-meta { font-size: 12px; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.entry-amounts { text-align: right; flex-shrink: 0; }
+.entry-main { font-size: 15px; font-weight: 500; font-family: 'DM Serif Display', serif; }
+.entry-sub { font-size: 11px; color: var(--amber); margin-top: 1px; }
+.del-btn { background: none; border: none; cursor: pointer; color: var(--faint); font-size: 20px; padding: 4px; line-height: 1; flex-shrink: 0; }
+.del-btn:hover { color: var(--red); }
+
+.badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; text-transform: capitalize; }
+.badge-software  { background: var(--blue-bg);  color: var(--blue); }
+.badge-equipment { background: var(--green-bg); color: var(--green); }
+.badge-travel    { background: #FFF3CD; color: #7A5A00; }
+.badge-meals     { background: #FBEAF0; color: #72243E; }
+.badge-other     { background: var(--surface2); color: var(--muted); }
+
+.empty { text-align: center; padding: 3rem 1rem; color: var(--faint); font-size: 14px; }
+
+.tax-box { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; text-align: center; }
+.tax-box h2 { font-size: 11px; color: #9A6B2A; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.tax-box .big { font-family: 'DM Serif Display', serif; font-size: 2.4rem; color: var(--amber); }
+.tax-box p { font-size: 12px; color: #9A6B2A; margin-top: 6px; }
+
+.quarter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.q-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 13px; text-align: center; }
+.q-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.q-val { font-family: 'DM Serif Display', serif; font-size: 1.2rem; }
+.q-tax { font-size: 11px; color: var(--amber); margin-top: 3px; }
+
+.chart-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; font-weight: 500; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bar-label { width: 60px; color: var(--muted); text-align: right; flex-shrink: 0; font-size: 11px; }
+.bar-bg { flex: 1; height: 18px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.bar-val { width: 64px; font-weight: 500; font-size: 12px; }
+.bar-sub-wrap { flex: 1; }
+.bar-sub { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.bar-sub:last-child { margin-bottom: 0; }
+.bar-sub-label { width: 44px; font-size: 10px; color: var(--muted); }
+
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.15); border-top-color: #111; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast { position: fixed; bottom: calc(var(--safe-bot) + 20px); left: 50%; transform: translateX(-50%); background: #111111; color: #FFFFFF; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200; white-space: nowrap; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <h1>Freelance Finances</h1>
+  <p>Sign in to access your tracker</p>
+  <div class="login-box">
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="login-password" autocomplete="current-password" placeholder="Your password" />
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1>Freelance Finances</h1>
+        <p>Income · Expenses · Taxes</p>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="metrics-strip" id="metrics-strip"></div>
+
+  <div class="tabs-bar">
+    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab" onclick="switchTab('income')">Income</button>
+    <button class="tab" onclick="switchTab('expenses')">Expenses</button>
+    <button class="tab" onclick="switchTab('taxes')">Taxes</button>
+  </div>
+
+  <div class="content">
+
+    <div id="panel-overview" class="panel active">
+      <div class="chart-section">
+        <div class="section-label">Monthly income vs expenses</div>
+        <div id="monthly-chart"></div>
+      </div>
+    </div>
+
+    <div id="panel-income" class="panel">
+      <div class="add-form">
+        <div class="field">
+          <label>Client / Description</label>
+          <input type="text" id="inc-desc" placeholder="e.g. Acme Corp — website project" />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Amount ($)</label>
+            <input type="number" id="inc-amount" placeholder="0.00" min="0" step="0.01" inputmode="decimal" />
+          </div>
+          <div class="field">
+            <label>Month (MM/YYYY)</label>
+            <input type="text" id="inc-date" placeholder="04/2026" />
+          </div>
+        </div>
+        <button class="btn btn-primary" id="inc-btn" onclick="addIncome()">+ Add Income</button>
+      </div>
+      <div class="entries" id="income-list"></div>
+      <div id="income-empty" class="empty">No income recorded yet.</div>
+    </div>
+
+    <div id="panel-expenses" class="panel">
+      <div class="add-form">
+        <div class="field">
+          <label>Description</label>
+          <input type="text" id="exp-desc" placeholder="e.g. Adobe Creative Cloud" />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Amount ($)</label>
+            <input type="number" id="exp-amount" placeholder="0.00" min="0" step="0.01" inputmode="decimal" />
+          </div>
+          <div class="field">
+            <label>Month (MM/YYYY)</label>
+            <input type="text" id="exp-date" placeholder="04/2026" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="exp-cat">
+            <option value="software">Software</option>
+            <option value="equipment">Equipment</option>
+            <option value="travel">Travel</option>
+            <option value="meals">Meals</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="exp-btn" onclick="addExpense()">+ Add Expense</button>
+      </div>
+      <div class="entries" id="expense-list"></div>
+      <div id="expense-empty" class="empty">No expenses recorded yet.</div>
+    </div>
+
+    <div id="panel-taxes" class="panel">
+      <div class="tax-box" id="tax-box"></div>
+      <div class="quarter-grid" id="quarter-grid"></div>
+      <div class="chart-section">
+        <div class="section-label">Expenses by category</div>
+        <div id="cat-chart"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://zzycouvsgyhbbndvqgum.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6eWNvdXZzZ3loYmJuZHZxZ3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzE5OTgsImV4cCI6MjA5MjU0Nzk5OH0.F2jjdR2fkyKQss8t0WsNw40kX87U3PmPInKpoWa6zdQ';
+const TAX_RATE = 0.25;
+
+let token = localStorage.getItem('fl_token') || null;
+let userId = localStorage.getItem('fl_uid') || null;
+let income = [];
+let expenses = [];
+
+function api(path, method='GET', body=null, auth=true) {
+  const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY };
+  if (auth && token) headers['Authorization'] = 'Bearer ' + token;
+  if (method === 'POST') headers['Prefer'] = 'return=representation';
+  if (method === 'DELETE') headers['Prefer'] = 'return=representation';
+  return fetch(SUPABASE_URL + path, { method, headers, body: body ? JSON.stringify(body) : null })
+    .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.message || e.error || 'Request failed'); }));
+}
+
+function authApi(path, method, body) {
+  const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY };
+  return fetch(SUPABASE_URL + '/auth/v1' + path, { method, headers, body: JSON.stringify(body) })
+    .then(r => r.json());
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  err.textContent = '';
+  if (!email || !password) { err.textContent = 'Please enter your email and password.'; return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.access_token) {
+      err.textContent = data.error_description || data.msg || data.message || 'Login failed. Check your email and password.';
+      btn.disabled = false; btn.textContent = 'Sign in'; return;
+    }
+    token = data.access_token;
+    userId = data.user?.id;
+    localStorage.setItem('fl_token', token);
+    localStorage.setItem('fl_uid', userId);
+    showApp();
+  } catch(e) {
+    err.textContent = 'Connection error: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+
+document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  await ensureTables();
+  await loadData();
+}
+
+async function ensureTables() {
+  // Tables are created via Supabase dashboard — we just try to fetch and handle gracefully
+}
+
+async function loadData() {
+  try {
+    const [inc, exp] = await Promise.all([
+      api(`/rest/v1/income?user_id=eq.${userId}&order=created_at.desc`),
+      api(`/rest/v1/expenses?user_id=eq.${userId}&order=created_at.desc`)
+    ]);
+    income = Array.isArray(inc) ? inc : [];
+    expenses = Array.isArray(exp) ? exp : [];
+    render();
+  } catch(e) {
+    showToast('Could not load data');
+  }
+}
+
+async function doLogout() {
+  token = null; userId = null;
+  localStorage.removeItem('fl_token');
+  localStorage.removeItem('fl_uid');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Sign in';
+}
+
+function getDefaultDate() {
+  const d = new Date();
+  return (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+}
+
+async function addIncome() {
+  const desc = document.getElementById('inc-desc').value.trim();
+  const amount = parseFloat(document.getElementById('inc-amount').value);
+  const date = document.getElementById('inc-date').value.trim() || getDefaultDate();
+  if (!desc || isNaN(amount) || amount <= 0) { showToast('Fill in description and amount'); return; }
+  const btn = document.getElementById('inc-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await api('/rest/v1/income', 'POST', { user_id: userId, description: desc, amount, date });
+    if (Array.isArray(res) && res[0]) { income.unshift(res[0]); }
+    else await loadData();
+    document.getElementById('inc-desc').value = '';
+    document.getElementById('inc-amount').value = '';
+    document.getElementById('inc-date').value = '';
+    showToast('Income added');
+    render();
+  } catch(e) { showToast('Error saving'); }
+  btn.disabled = false; btn.textContent = '+ Add Income';
+}
+
+async function addExpense() {
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const date = document.getElementById('exp-date').value.trim() || getDefaultDate();
+  const cat = document.getElementById('exp-cat').value;
+  if (!desc || isNaN(amount) || amount <= 0) { showToast('Fill in description and amount'); return; }
+  const btn = document.getElementById('exp-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await api('/rest/v1/expenses', 'POST', { user_id: userId, description: desc, amount, date, cat });
+    if (Array.isArray(res) && res[0]) { expenses.unshift(res[0]); }
+    else await loadData();
+    document.getElementById('exp-desc').value = '';
+    document.getElementById('exp-amount').value = '';
+    document.getElementById('exp-date').value = '';
+    showToast('Expense added');
+    render();
+  } catch(e) { showToast('Error saving'); }
+  btn.disabled = false; btn.textContent = '+ Add Expense';
+}
+
+async function delIncome(id) {
+  if (!confirm('Remove this entry?')) return;
+  await api(`/rest/v1/income?id=eq.${id}`, 'DELETE');
+  income = income.filter(x => x.id !== id);
+  showToast('Removed'); render();
+}
+
+async function delExpense(id) {
+  if (!confirm('Remove this entry?')) return;
+  await api(`/rest/v1/expenses?id=eq.${id}`, 'DELETE');
+  expenses = expenses.filter(x => x.id !== id);
+  showToast('Removed'); render();
+}
+
+function fmt(n) {
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function switchTab(tab) {
+  const tabs = ['overview','income','expenses','taxes'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i]===tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function render() {
+  const totalIncome = income.reduce((s,x) => s+x.amount, 0);
+  const totalExpenses = expenses.reduce((s,x) => s+x.amount, 0);
+  const taxable = Math.max(0, totalIncome - totalExpenses);
+  const taxSet = taxable * TAX_RATE;
+  const profit = taxable - taxSet;
+
+  document.getElementById('metrics-strip').innerHTML = `
+    <div class="metric-pill"><div class="label">Income</div><div class="val">${fmt(totalIncome)}</div></div>
+    <div class="metric-pill"><div class="label">Expenses</div><div class="val red">${fmt(totalExpenses)}</div></div>
+    <div class="metric-pill"><div class="label">Tax aside</div><div class="val amber">${fmt(taxSet)}</div></div>
+    <div class="metric-pill"><div class="label">Take-home</div><div class="val green">${fmt(profit)}</div></div>
+  `;
+
+  // Monthly chart
+  const months = {};
+  income.forEach(x => { months[x.date]=months[x.date]||{inc:0,exp:0}; months[x.date].inc+=x.amount; });
+  expenses.forEach(x => { months[x.date]=months[x.date]||{inc:0,exp:0}; months[x.date].exp+=x.amount; });
+  const sorted = Object.keys(months).sort();
+  const maxVal = Math.max(...sorted.map(m=>Math.max(months[m].inc,months[m].exp)),1);
+  document.getElementById('monthly-chart').innerHTML = sorted.length===0
+    ? '<div style="color:var(--faint);font-size:13px;text-align:center;padding:1.5rem">Add income or expenses to see your breakdown.</div>'
+    : sorted.map(m => `<div class="bar-row">
+        <div class="bar-label">${m}</div>
+        <div class="bar-sub-wrap">
+          <div class="bar-sub"><div class="bar-sub-label">Income</div><div class="bar-bg"><div class="bar-fill" style="width:${(months[m].inc/maxVal*100).toFixed(1)}%;background:#3B6D11"></div></div><div class="bar-val">${fmt(months[m].inc)}</div></div>
+          <div class="bar-sub"><div class="bar-sub-label">Expenses</div><div class="bar-bg"><div class="bar-fill" style="width:${(months[m].exp/maxVal*100).toFixed(1)}%;background:#E24B4A"></div></div><div class="bar-val">${fmt(months[m].exp)}</div></div>
+        </div>
+      </div>`).join('');
+
+  // Income list
+  const il = document.getElementById('income-list');
+  const ie = document.getElementById('income-empty');
+  if (income.length===0) { il.innerHTML=''; ie.style.display=''; }
+  else {
+    ie.style.display='none';
+    il.innerHTML = income.map(x=>`
+      <div class="entry-card">
+        <div class="entry-info">
+          <div class="entry-desc">${x.description}</div>
+          <div class="entry-meta">${x.date}</div>
+        </div>
+        <div class="entry-amounts">
+          <div class="entry-main">${fmt(x.amount)}</div>
+          <div class="entry-sub">aside ${fmt(x.amount*TAX_RATE)}</div>
+        </div>
+        <button class="del-btn" onclick="delIncome('${x.id}')">×</button>
+      </div>`).join('');
+  }
+
+  // Expense list
+  const el = document.getElementById('expense-list');
+  const ee = document.getElementById('expense-empty');
+  if (expenses.length===0) { el.innerHTML=''; ee.style.display=''; }
+  else {
+    ee.style.display='none';
+    el.innerHTML = expenses.map(x=>`
+      <div class="entry-card">
+        <div class="entry-info">
+          <div class="entry-desc">${x.description}</div>
+          <div class="entry-meta"><span class="badge badge-${x.cat}">${x.cat}</span> ${x.date}</div>
+        </div>
+        <div class="entry-amounts">
+          <div class="entry-main" style="color:var(--red)">${fmt(x.amount)}</div>
+        </div>
+        <button class="del-btn" onclick="delExpense('${x.id}')">×</button>
+      </div>`).join('');
+  }
+
+  // Tax panel
+  document.getElementById('tax-box').innerHTML = `
+    <h2>Set aside for taxes</h2>
+    <div class="big">${fmt(taxSet)}</div>
+    <p>${fmt(totalIncome)} income − ${fmt(totalExpenses)} expenses = ${fmt(taxable)} taxable</p>
+  `;
+
+  const quarters={Q1:0,Q2:0,Q3:0,Q4:0};
+  const qMap={Q1:['01','02','03'],Q2:['04','05','06'],Q3:['07','08','09'],Q4:['10','11','12']};
+  income.forEach(x=>{const m=(x.date||'').split('/')[0];for(const q in qMap){if(qMap[q].includes(m))quarters[q]+=x.amount;}});
+  expenses.forEach(x=>{const m=(x.date||'').split('/')[0];for(const q in qMap){if(qMap[q].includes(m))quarters[q]-=x.amount;}});
+  document.getElementById('quarter-grid').innerHTML = Object.keys(quarters).map(q=>{
+    const net=Math.max(0,quarters[q]);
+    return `<div class="q-card"><div class="q-label">${q}</div><div class="q-val">${fmt(net)}</div><div class="q-tax">aside ${fmt(net*TAX_RATE)}</div></div>`;
+  }).join('');
+
+  const cats=['software','equipment','travel','meals','other'];
+  const catColors={software:'#185FA5',equipment:'#3B6D11',travel:'#C8960C',meals:'#993556',other:'#7A7268'};
+  const catTotals={};
+  cats.forEach(c=>{catTotals[c]=expenses.filter(x=>x.cat===c).reduce((s,x)=>s+x.amount,0);});
+  const maxCat=Math.max(...Object.values(catTotals),1);
+  const activeCats=cats.filter(c=>catTotals[c]>0);
+  document.getElementById('cat-chart').innerHTML = activeCats.length===0
+    ? '<div style="color:var(--faint);font-size:13px;text-align:center;padding:1rem">No expenses yet.</div>'
+    : activeCats.map(c=>`<div class="bar-row"><div class="bar-label">${c}</div><div class="bar-bg"><div class="bar-fill" style="width:${(catTotals[c]/maxCat*100).toFixed(1)}%;background:${catColors[c]}"></div></div><div class="bar-val">${fmt(catTotals[c])}</div></div>`).join('');
+}
+
+// Auto-login if token exists
+if (token && userId) showApp();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
