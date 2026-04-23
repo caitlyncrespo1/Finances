@@ -298,8 +298,10 @@ let expenses = [];
 function api(path, method='GET', body=null, auth=true) {
   const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY };
   if (auth && token) headers['Authorization'] = 'Bearer ' + token;
+  if (method === 'POST') headers['Prefer'] = 'return=representation';
+  if (method === 'DELETE') headers['Prefer'] = 'return=representation';
   return fetch(SUPABASE_URL + path, { method, headers, body: body ? JSON.stringify(body) : null })
-    .then(r => r.json());
+    .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.message || e.error || 'Request failed'); }));
 }
 
 function authApi(path, method, body) {
